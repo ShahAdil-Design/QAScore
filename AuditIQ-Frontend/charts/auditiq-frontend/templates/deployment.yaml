@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ include "helpers.namespace" . }}
+  name: {{ include "helpers.name" . }}
+  labels:
+{{ include "helpers.labels" . | indent 4 }}
+{{ include "helpers.datadog.labels" . | indent 4 }}
+    {{- include "helpers.serviceOwnership" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "helpers.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: {{ include "helpers.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- include "helpers.datadog.labels" . | nindent 8 }}
+        {{- include "helpers.serviceOwnership" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "helpers.name" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ include "helpers.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: podhttp
+              containerPort: 80
+              protocol: TCP
+          env:
+            - name: "healthCheck__filePath"
+              value: "./appsettings.json"
+            - name: "instrumentation__daemonHostname"
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          volumeMounts:
+          - name: secrets
+            mountPath: /app/secrets
+            readOnly: true
+          - name: config
+            mountPath: /app/config
+            readOnly: true
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: podhttp
+            successThreshold: 1
+            timeoutSeconds: 2
+            periodSeconds: 15
+            failureThreshold: 3
+            initialDelaySeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: podhttp
+            successThreshold: 1
+            timeoutSeconds: 1
+            periodSeconds: 10
+            failureThreshold: 1
+            initialDelaySeconds: 15
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: secrets
+        secret:
+          secretName: secret-appsettings-{{ include "helpers.name" . }}
+      - name: config
+        configMap:
+          name: config-appsettings-{{ include "helpers.name" . }}

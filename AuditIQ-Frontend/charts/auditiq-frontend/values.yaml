@@ -1,0 +1,33 @@
+name: "auditiq-frontend"
+serviceOwner: "qa-platform"
+
+replicas:
+  minimum: 2
+  maximum: 5
+
+externallyAccessible: true
+
+retries:
+  attempts: 2
+  timeoutPerAttempt: 3s
+
+image:
+  repository: eu.gcr.io/oak-tools-shared
+  imageName: auditiq-frontend
+  tag: 0.1.0
+  pullPolicy: IfNotPresent
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 100Mi
+  limits:
+    cpu: 300m
+    memory: 250Mi
+
+podDisruption:
+  minAvailable: 50%
+
+google:
+  projectPrefix: "oak-plat-"
+  environment: "dev"

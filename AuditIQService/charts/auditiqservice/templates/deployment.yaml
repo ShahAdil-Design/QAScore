@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: {{ include "helpers.namespace" . }}
+  name: {{ include "helpers.name" . }}
+  labels:
+{{ include "helpers.labels" . | indent 4 }}
+    {{- include "helpers.serviceOwnership" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "helpers.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0
+  template:
+    metadata:
+      annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
+      labels:
+        app.kubernetes.io/name: {{ include "helpers.name" . }}
+        app.kubernetes.io/instance: {{ .Release.Name }}
+        {{- include "helpers.serviceOwnership" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "helpers.name" . }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: {{ include "helpers.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: podhttp
+              containerPort: 8080
+              protocol: TCP
+          env:
+            {{- include  "helpers.contrast.environment" .Values.contrast | nindent 12 }}
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+            # OpenTelemetry .NET Auto-Instrumentation
+            # Reference: https://opentelemetry.io/docs/zero-code/dotnet/configuration/
+            - name: "OTEL_EXPORTER_OTLP_ENDPOINT"
+              value: "http://$(NODE_IP):4317"
+            - name: "OTEL_EXPORTER_OTLP_PROTOCOL"
+              value: "{{ .Values.otel.exporter.otlp.protocol }}"
+            - name: "OTEL_EXPORTER_OTLP_INSECURE"
+              value: "true"
+            - name: "OTEL_TRACES_EXPORTER"
+              value: "otlp"
+            - name: "OTEL_METRICS_EXPORTER"
+              value: "otlp"
+            - name: "OTEL_LOGS_EXPORTER"
+              value: "otlp"
+            - name: "OTEL_SERVICE_NAME"
+              value: "{{ .Values.otel.serviceName }}"
+            - name: "OTEL_RESOURCE_ATTRIBUTES"
+              value: "{{ .Values.otel.resourceAttributes }}"
+            - name: "OTEL_DOTNET_AUTO_TRACES_INSTRUMENTATION_ENABLED"
+              value: "true"
+            - name: "OTEL_DOTNET_AUTO_METRICS_INSTRUMENTATION_ENABLED"
+              value: "true"
+            - name: "OTEL_DOTNET_AUTO_LOGS_INSTRUMENTATION_ENABLED"
+              value: "true"
+            - name: "OTEL_DOTNET_AUTO_LOGS_INCLUDE_FORMATTED_MESSAGE"
+              value: "true"
+            - name: "ASPNETCORE_URLS"
+              value: "http://+:8080"
+            - name: "ASPNETCORE_ENVIRONMENT"
+              value: {{ .Values.google.environment | eq "prod" | ternary "Production" "Development" | quote }}
+            {{- if .Values.azure.workloadIdentity.enabled }}
+            - name: "Azure__UseWorkloadIdentity"
+              value: "true"
+            - name: "AZURE_CLIENT_ID"
+              value: {{ .Values.azure.workloadIdentity.clientId | quote }}
+            - name: "AZURE_TENANT_ID"
+              value: {{ .Values.azure.workloadIdentity.tenantId | quote }}
+            - name: "AZURE_FEDERATED_TOKEN_FILE"
+              value: "/var/run/secrets/azure/tokens/azure-token"
+            {{- end }}
+          volumeMounts:
+          - name: secrets
+            mountPath: /app/secrets
+            readOnly: true
+          - name: config
+            mountPath: /app/config
+            readOnly: true
+          {{- if .Values.azure.workloadIdentity.enabled }}
+          - name: azure-token
+            mountPath: /var/run/secrets/azure/tokens
+            readOnly: true
+          {{- end }}
+          livenessProbe: # Kills & restarts pod on failure
+            httpGet:
+              path: /health
+              port: podhttp
+            successThreshold: 1
+            timeoutSeconds: 2
+            periodSeconds: 15
+            failureThreshold: 3
+            initialDelaySeconds: {{ .Values.probes.initialDelaySeconds }}
+          readinessProbe: # Removes Pod from load balancer on failure
+            httpGet:
+              path: /health
+              port: podhttp
+            successThreshold: 1
+            timeoutSeconds: 1
+            periodSeconds: 10
+            failureThreshold: 1
+            initialDelaySeconds: {{ .Values.probes.initialDelaySeconds }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      volumes:
+      - name: secrets
+        secret:
+          secretName: secret-appsettings-{{ include "helpers.name" . }}
+      - name: config
+        configMap:
+          name: config-appsettings-{{ include "helpers.name" . }}
+      {{- if .Values.azure.workloadIdentity.enabled }}
+      - name: azure-token
+        projected:
+          sources:
+            - serviceAccountToken:
+                path: azure-token
+                audience: api://AzureADTokenExchange
+                expirationSeconds: 3600
+      {{- end }}

@@ -1,0 +1,46 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: {{ include "helpers.name" . }}
+  labels:
+{{ include "helpers.labels" . | indent 4 }}
+spec:
+  hosts:
+  - {{ include "helpers.name" . }}
+  - auditiq.api.oak.d01.o6k.xyz
+  - auditiq.api.oak.d02.o6k.xyz
+  - auditiq.api.oak.d03.o6k.xyz
+  - auditiq.api.oak.s01.o6k.xyz
+  - auditiq.api.oak.p01.o6k.xyz
+  - auditiq.api.oakbrook.com
+  gateways:
+  - default/api-gateway
+  http:
+  - route:
+    - destination:
+        host: {{ include "helpers.name" . }}.{{ include "helpers.namespace" . }}.svc.cluster.local
+    retries:
+      attempts: {{ .Values.retries.attempts }}
+      perTryTimeout: {{ .Values.retries.timeoutPerAttempt }}
+    {{- if .Values.cors.allowedOrigins }}
+    {{- if ne (index .Values.cors.allowedOrigins 0) ""}}
+    corsPolicy:
+      allowOrigin:
+        {{- range .Values.cors.allowedOrigins }}
+          - {{ . }}
+        {{- end}}
+    {{- end }}
+    {{- end }}
+      allowMethods:
+      - POST
+      - PUT
+      - GET
+      allowHeaders:
+      - Authorization
+      - Content-Type
+      - Referer
+      - User-Agent
+      - Accept
+      - traceparent
+      - tracestate
+      - baggage

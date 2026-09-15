@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "helpers.name" . }}
+  namespace: {{ include "helpers.namespace" . }}
+  labels:
+{{ include "helpers.labels" . | indent 4 }}
+{{- include "helpers.serviceOwnership" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - port: 80
+      targetPort: podhttp
+      protocol: TCP
+      name: http
+  selector:
+    app.kubernetes.io/name: {{ include "helpers.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}

@@ -1,0 +1,82 @@
+/* ─────────────────────────────────────────────────────────────────────
+ * Design tokens — ported from the AuditIQ design reference
+ * (C:\Users\Adil.Shah\Downloads\audit-iq). Components consume these via
+ * Tailwind utilities (bg-primary, text-muted-foreground, border-border, ...)
+ * mapped in index.css's @theme block. Never hardcode a colour or radius —
+ * add a token instead. [data-theme="dark"] gives every token a dark value.
+ * ─────────────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+
+  --background: oklch(0.985 0.008 230);
+  --foreground: oklch(0.22 0.035 245);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.035 245);
+
+  --primary: oklch(0.52 0.19 252);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.95 0.025 230);
+  --secondary-foreground: oklch(0.3 0.08 245);
+  --muted: oklch(0.965 0.012 230);
+  --muted-foreground: oklch(0.52 0.035 245);
+  --accent: oklch(0.94 0.035 225);
+  --accent-foreground: oklch(0.3 0.08 245);
+
+  --border: oklch(0.9 0.025 230);
+  --input: oklch(0.88 0.025 230);
+  --ring: oklch(0.52 0.19 252);
+
+  /* Evaluation status colours — used across Score/Review/Calibration */
+  --status-pass: oklch(0.6 0.15 150);
+  --status-pass-bg: oklch(0.94 0.05 150);
+  --status-fail: oklch(0.58 0.22 25);
+  --status-fail-bg: oklch(0.94 0.05 25);
+  --status-warn: oklch(0.7 0.15 80);
+  --status-warn-bg: oklch(0.94 0.05 80);
+
+  --radius: 0.7rem;
+
+  --content-max: 1440px;
+  --sidebar-w: 256px;
+  --header-h: 80px;
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --background: oklch(0.19 0.02 245);
+  --foreground: oklch(0.94 0.01 230);
+  --card: oklch(0.23 0.02 245);
+  --card-foreground: oklch(0.94 0.01 230);
+
+  --primary: oklch(0.68 0.17 252);
+  --primary-foreground: oklch(0.15 0.02 245);
+  --secondary: oklch(0.28 0.02 245);
+  --secondary-foreground: oklch(0.92 0.01 230);
+  --muted: oklch(0.27 0.02 245);
+  --muted-foreground: oklch(0.68 0.02 230);
+  --accent: oklch(0.3 0.03 245);
+  --accent-foreground: oklch(0.92 0.01 230);
+
+  --border: oklch(0.32 0.02 245);
+  --input: oklch(0.36 0.02 245);
+  --ring: oklch(0.68 0.17 252);
+
+  --status-pass: oklch(0.72 0.17 150);
+  --status-pass-bg: oklch(0.3 0.06 150);
+  --status-fail: oklch(0.68 0.2 25);
+  --status-fail-bg: oklch(0.32 0.08 25);
+  --status-warn: oklch(0.78 0.15 80);
+  --status-warn-bg: oklch(0.32 0.07 80);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

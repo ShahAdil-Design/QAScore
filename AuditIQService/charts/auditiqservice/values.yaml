@@ -1,0 +1,85 @@
+name: "AuditIQService"
+serviceOwner: "qa-platform"
+
+# Section 9 of the master doc: <1,000 evaluations/month — no unusual scaling design needed.
+# Kept deliberately smaller than a typical org service (2-5) until real load says otherwise.
+replicas:
+  minimum: 1
+  maximum: 3
+
+externallyAccessible: true
+
+retries:
+  attempts: 2
+  timeoutPerAttempt: 3s
+
+# Mesh-level CORS on the VirtualService — separate from the app's own Cors:AllowedOrigins
+# (appsettings.config.json), which only covers ASP.NET Core's own CORS middleware. Envoy
+# enforces its own preflight/response headers at the gateway before a request ever reaches the
+# pod, so both need the calling origin listed. Overridden per-environment via Helm value
+# overrides (cors.allowedOrigins[0], [1], ...), matching applicationservice's convention.
+cors:
+  allowedOrigins: ""
+
+image:
+  repository: eu.gcr.io/oak-tools-shared
+  imageName: auditiqservice
+  tag: 0.1.0
+  pullPolicy: IfNotPresent
+
+probes:
+  initialDelaySeconds: 30
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 100Mi
+  limits:
+    cpu: 300m
+    memory: 250Mi
+
+podDisruption:
+  minAvailable: 50%
+
+google:
+  projectPrefix: "oak-plat-"
+  environment: "dev"
+
+# Azure AD workload identity federation: lets the pod authenticate to Azure SQL by
+# exchanging its GKE-issued OIDC token for an Azure AD token, via an Entra federated
+# credential trusting subject system:serviceaccount:<namespace>:<service account name>.
+# Off by default — enable and set clientId/tenantId per-environment where an Entra app
+# registration + federated credential have actually been created for this cluster.
+azure:
+  workloadIdentity:
+    enabled: false
+    clientId: ""
+    tenantId: ""
+
+# OpenTelemetry Configuration — matches the org's OTEL convention (accountmanagementservice
+# chart) rather than Datadog, which that chart has since removed in favour of OTEL.
+otel:
+  exporter:
+    otlp:
+      endpoint: "http://$(NODE_IP):4317"
+      protocol: "grpc"
+  serviceName: "auditiqservice"
+  resourceAttributes: "application.name=auditiq,cx.application.name=auditiq,cx.subsystem.name=auditiqservice"
+
+contrast:
+  enableTracing: true
+  apikey: "service_key"
+  servicekey: "api_key"
+  apiurl: "url"
+  username: "username"
+  environment: "dev"
+  server: "server"
+  applicationName: "AuditIQService"
+
+# TBD (Section 13 — SSO integration not yet confirmed): these need the org's real Istio JWT
+# issuer/principal values before authorization.yaml is meaningful. Do not treat these
+# placeholders as a working policy — the AuthorizationPolicy will deny everything until real
+# values are supplied via a per-environment values override.
+authorization:
+  validSourcePrincipals: []
+  validIssuers: []

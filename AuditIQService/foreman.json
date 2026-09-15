@@ -1,0 +1,17 @@
+{
+  "version": "0.1.0",
+  "versionBumping": "PRAutomatic",
+  "consumables": [],
+  "deployables": [
+    "auditiqservice"
+  ],
+  "images": [
+    "AuditIQService"
+  ],
+  "tools": [],
+  "useRabbit": false,
+  "useMongo": false,
+  "useSqlServer": true,
+  "usePubSub": false,
+  "projectType": "dotnet"
+}

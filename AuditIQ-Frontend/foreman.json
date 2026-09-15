@@ -1,0 +1,17 @@
+{
+  "version": "0.1.0",
+  "versionBumping": "PRAutomatic",
+  "consumables": [],
+  "deployables": [
+    "auditiq-frontend"
+  ],
+  "images": [
+    "auditiq-frontend"
+  ],
+  "tools": [],
+  "useRabbit": false,
+  "useMongo": false,
+  "useSqlServer": false,
+  "usePubSub": false,
+  "projectType": "node"
+}

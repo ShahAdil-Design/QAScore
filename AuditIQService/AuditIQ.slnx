@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AuditIQService/AuditIQService.csproj" />
+    <Project Path="src/AuditIQ.Application/AuditIQ.Application.csproj" />
+    <Project Path="src/AuditIQ.Domain/AuditIQ.Domain.csproj" />
+    <Project Path="src/AuditIQ.Infrastructure/AuditIQ.Infrastructure.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AuditIQ.IntegrationTests/AuditIQ.IntegrationTests.csproj" />
+    <Project Path="tests/AuditIQ.UnitTests/AuditIQ.UnitTests.csproj" />
+  </Folder>
+</Solution>

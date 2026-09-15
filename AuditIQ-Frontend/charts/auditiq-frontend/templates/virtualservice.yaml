@@ -1,0 +1,35 @@
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: {{ include "helpers.name" . }}
+  labels:
+{{ include "helpers.labels" . | indent 4 }}
+spec:
+{{ if .Values.externallyAccessible }}
+  hosts:
+  - {{ include "helpers.name" . }}
+  - auditiq.oak.d01.o6k.xyz
+  - auditiq.oak.d02.o6k.xyz
+  - auditiq.oak.d03.o6k.xyz
+  - auditiq.oak.s01.o6k.xyz
+  - auditiq.oak.p01.o6k.xyz
+  gateways:
+  - default/oakbrook-gateway
+  http:
+  - route:
+    - destination:
+        host: {{ include "helpers.name" . }}.{{ include "helpers.namespace" . }}.svc.cluster.local
+    retries:
+      attempts: {{ .Values.retries.attempts }}
+      perTryTimeout: {{ .Values.retries.timeoutPerAttempt }}
+{{ else }}
+  hosts:
+  - {{ include "helpers.name" . }}
+  http:
+  - route:
+    - destination:
+        host: {{ include "helpers.name" . }}.{{ include "helpers.namespace" . }}.svc.cluster.local
+    retries:
+      attempts: {{ .Values.retries.attempts }}
+      perTryTimeout: {{ .Values.retries.timeoutPerAttempt }}
+{{ end }}

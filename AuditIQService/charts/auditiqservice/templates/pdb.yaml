@@ -1,0 +1,11 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "helpers.name" . }}-pdb
+  namespace: {{ include "helpers.namespace" . }}
+spec:
+  minAvailable: {{ .Values.podDisruption.minAvailable }}
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ include "helpers.name" . }}
+      app.kubernetes.io/instance: {{ .Release.Name }}
